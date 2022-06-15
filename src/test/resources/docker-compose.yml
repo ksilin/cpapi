@@ -1,0 +1,122 @@
+---
+version: '3.5'
+services:
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.1.1
+    hostname: zookeeper
+    container_name: zookeeper
+    restart: always
+    ports:
+      - "9999:9999"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: localhost
+      # for 5.4.x:
+      KAFKA_OPTS: -Dzookeeper.4lw.commands.whitelist=*
+
+  broker:
+    image: confluentinc/cp-server:7.1.1
+    hostname: broker
+    container_name: broker
+    restart: always
+    ports:
+      - "9092:9092"
+      - "8090:8090"
+      - "9093:9093"
+      - "29092:29092"
+      - "10000:10000"
+    environment:
+      KAFKA_JMX_PORT: 10000
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+
+      # add token listener mapping
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: BROKER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT, TOKEN:SASL_PLAINTEXT
+
+      # added token listener
+      KAFKA_LISTENERS: BROKER://:9092,PLAINTEXT_HOST://:29092,TOKEN://:9093
+      KAFKA_ADVERTISED_LISTENERS: BROKER://broker:9092,PLAINTEXT_HOST://localhost:29092,TOKEN://:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      # Confluent Metrics Reporter for Control Center Cluster Monitoring
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:9092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      # for 5.4.x:
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      # for 6.0.0
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+      # FILE-based users for MDS
+      # following docs
+      # https://docs.confluent.io/platform/current/kafka/configure-mds/index.html#configure-the-confluent-server-authorizer
+
+      # MDS token service settings
+      KAFKA_CONFLUENT_METADATA_SERVER_TOKEN_KEY_PATH: /tmp/mds_token_keypair.pem
+      KAFKA_CONFLUENT_METADATA_SERVER_PUBLIC_KEY_PATH: /tmp/mds_public_key.pem
+
+      # swagger UI - http://localhost:8090/security/openapi/swagger-ui/index.html
+      KAFKA_CONFLUENT_METADATA_SERVER_OPENAPI_ENABLE: "true"
+
+      # TODO - how do these users authenticate? Do they?
+      KAFKA_SUPER_USERS: User:ANONYMOUS;User:mds
+
+      # MDS server settings
+      # all authenticated users log in
+      KAFKA_CONFLUENT_METADATA_SERVER_AUTHENTICATION_ROLES: '**'
+      KAFKA_CONFLUENT_METADATA_TOPIC_REPLICATION_FACTOR: 1
+
+      # Configure the RBAC Metadata Service authorizer
+      KAFKA_AUTHORIZER_CLASS_NAME: io.confluent.kafka.security.authorizer.ConfluentServerAuthorizer
+      KAFKA_CONFLUENT_AUTHORIZER_ACCESS_RULE_PROVIDERS: CONFLUENT,ZK_ACL
+
+      # Bind Metadata Service HTTP service to port 8090
+      KAFKA_CONFLUENT_METADATA_SERVER_LISTENERS: http://0.0.0.0:8090
+
+      # Configure HTTP service advertised hostname. Set this to http://127.0.0.1:8090 if running locally.
+      KAFKA_CONFLUENT_METADATA_SERVER_ADVERTISED_LISTENERS: http://127.0.0.1:8090
+
+      # HashLoginService Initializer
+      KAFKA_CONFLUENT_METADATA_SERVER_AUTHENTICATION_METHOD: BEARER
+      KAFKA_CONFLUENT_METADATA_SERVER_USER_STORE: FILE
+      KAFKA_CONFLUENT_METADATA_SERVER_USER_STORE_FILE_PATH: /tmp/login.properties
+
+      # if you do not do this, you will get an error:
+      KAFKA_LISTENER_NAME_TOKEN_SASL_ENABLED_MECHANISMS: OAUTHBEARER
+
+      # Configure the public key used to verify tokens
+      # Note: username, password and metadataServerUrls must be set if used for inter-broker communication
+      KAFKA_LISTENER_NAME_TOKEN_OAUTHBEARER_SASL_JAAS_CONFIG: 'org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required publicKeyPath="/tmp/mds_public_key.pem";'
+      # Set SASL callback handler for verifying authentication token signatures
+      KAFKA_LISTENER_NAME_TOKEN_OAUTHBEARER_SASL_SERVER_CALLBACK_HANDLER_CLASS: "io.confluent.kafka.server.plugins.auth.token.TokenBearerValidatorCallbackHandler"
+      # Set SASL callback handler for handling tokens on login. This is essentially a noop if not used for inter-broker communication.
+      KAFKA_LISTENER_NAME_TOKEN_OAUTHBEARER_SASL_LOGIN_CALLBACK_HANDLER_CLASS: "io.confluent.kafka.server.plugins.auth.token.TokenBearerServerLoginCallbackHandler"
+
+      # TODO - mount login.properties & certs
+    volumes:
+      - ./mount:/tmp
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.1.1
+    hostname: schema-registry
+    container_name: schema-registry
+    restart: always
+    depends_on:
+      - broker
+    ports:
+      - "8081:8081"
+      - "10001:10001"
+    environment:
+      SCHEMA_REGISTRY_JMX_PORT: 10001
+      SCHEMA_REGISTRY_JMX_HOSTNAME: localhost
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: broker:9092
