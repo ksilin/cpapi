@@ -4,25 +4,29 @@
 
 inThisBuild(
   Seq(
-    organization := "example.com",
+    organization     := "example.com",
     organizationName := "ksilin",
-    startYear := Some(2022),
+    startYear        := Some(2022),
     licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-    scalaVersion := "3.1.0",
+    scalaVersion := "2.13.8",
     scalacOptions ++= Seq(
-      "-deprecation",
       "-unchecked",
-      "-rewrite",
-      "-indent",
-      "-pagewidth",
-      "100",
-      "-source",
-      "future",
-      "-Xfatal-warnings",
+      "-deprecation",
+      "-language:_",
+      "-encoding",
+      "UTF-8",
+      "-Ywarn-unused:imports",
     ),
-    testFrameworks += new TestFramework("munit.Framework"),
     scalafmtOnCompile := true,
-    dynverSeparator := "_", // the default `+` is not compatible with docker tags
+    dynverSeparator   := "_", // the default `+` is not compatible with docker tags
+    resolvers ++= Seq(
+      "confluent" at "https://packages.confluent.io/maven",
+      "ksqlDb" at "https://ksqldb-maven.s3.amazonaws.com/maven",
+      Resolver.sonatypeRepo("releases"),
+      Resolver.bintrayRepo("wolfendale", "maven"),
+      Resolver.mavenLocal,
+      "jitpack" at "https://jitpack.io"
+    )
   )
 )
 
@@ -30,16 +34,22 @@ inThisBuild(
 // Projects
 // *****************************************************************************
 
-lazy val midas =
+lazy val cpapi =
   project
     .in(file("."))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(commonSettings)
     .settings(
       libraryDependencies ++= Seq(
-        library.munit           % Test,
-        library.munitScalaCheck % Test,
+        library.clients,
+        library.airframeLog,
+        library.logback,
+        library.testcontainers   % Test,
+        library.scalatest        % Test,
+        library.restAssured      % Test,
+        library.restAssuredScala % Test,
       ),
+      libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-log4j12")) }
     )
 
 // *****************************************************************************
@@ -62,8 +72,19 @@ lazy val commonSettings =
 lazy val library =
   new {
     object Version {
-      val munit = "0.7.29"
+      val kafka          = "3.1.0"
+      val airframeLog    = "21.12.1"
+      val logback        = "1.2.10"
+      val scalatest      = "3.2.10"
+      val testContainers = "0.2.1"
+      val restAssured    = "5.1.1"
     }
-    val munit           = "org.scalameta" %% "munit"            % Version.munit
-    val munitScalaCheck = "org.scalameta" %% "munit-scalacheck" % Version.munit
+    val clients     = "org.apache.kafka"    % "kafka-clients" % Version.kafka
+    val airframeLog = "org.wvlet.airframe" %% "airframe-log"  % Version.airframeLog
+    val logback     = "ch.qos.logback"      % "logback-core"  % Version.logback
+    val testcontainers =
+      "com.github.christophschubert" % "cp-testcontainers" % Version.testContainers
+    val restAssured      = "io.rest-assured" % "rest-assured"  % Version.restAssured
+    val restAssuredScala = "io.rest-assured" % "scala-support" % Version.restAssured
+    val scalatest = "org.scalatest" %% "scalatest" % Version.scalatest
   }
