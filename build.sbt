@@ -25,8 +25,10 @@ inThisBuild(
       Resolver.sonatypeRepo("releases"),
       Resolver.bintrayRepo("wolfendale", "maven"),
       Resolver.mavenLocal,
-      "jitpack" at "https://jitpack.io"
-    )
+      Resolver.mavenCentral,
+      "jitpack" at "https://jitpack.io",
+      "jFrog" at "https://confluent.jfrog.io/artifactory/maven-public"
+    ),
   )
 )
 
@@ -44,10 +46,13 @@ lazy val cpapi =
         library.clients,
         library.airframeLog,
         library.logback,
+        library.jacksonDatabind,
+        library.jacksonScala,
         library.testcontainers   % Test,
         library.scalatest        % Test,
         library.restAssured      % Test,
         library.restAssuredScala % Test,
+        library.rbacApiServer    % Test,
       ),
       libraryDependencies ~= { _.map(_.exclude("org.slf4j", "slf4j-log4j12")) }
     )
@@ -72,19 +77,24 @@ lazy val commonSettings =
 lazy val library =
   new {
     object Version {
-      val kafka          = "3.1.0"
+      val kafka          = "3.0.0"
       val airframeLog    = "21.12.1"
       val logback        = "1.2.10"
+      val jackson        = "2.1.2"
       val scalatest      = "3.2.10"
       val testContainers = "0.2.1"
       val restAssured    = "5.1.1"
     }
-    val clients     = "org.apache.kafka"    % "kafka-clients" % Version.kafka
-    val airframeLog = "org.wvlet.airframe" %% "airframe-log"  % Version.airframeLog
-    val logback     = "ch.qos.logback"      % "logback-core"  % Version.logback
+    val clients         = "org.apache.kafka"           % "kafka-clients"    % Version.kafka
+    val airframeLog     = "org.wvlet.airframe"        %% "airframe-log"     % Version.airframeLog
+    val logback         = "ch.qos.logback"             % "logback-core"     % Version.logback
+    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % Version.jackson
+    val jacksonScala = "com.fasterxml.jackson.module" % "jackson-module-scala" % Version.jackson
+
     val testcontainers =
       "com.github.christophschubert" % "cp-testcontainers" % Version.testContainers
-    val restAssured      = "io.rest-assured" % "rest-assured"  % Version.restAssured
-    val restAssuredScala = "io.rest-assured" % "scala-support" % Version.restAssured
-    val scalatest = "org.scalatest" %% "scalatest" % Version.scalatest
+    val restAssured      = "io.rest-assured" % "rest-assured"    % Version.restAssured
+    val restAssuredScala = "io.rest-assured" % "scala-support"   % Version.restAssured
+    val rbacApiServer    = "io.confluent"    % "rbac-api-server" % "7.1.2-174"
+    val scalatest        = "org.scalatest"  %% "scalatest"       % Version.scalatest
   }

@@ -22,10 +22,13 @@ https://docs.confluent.io/platform/current/kafka-rest/production-deployment/conf
 
 BASIC or mTLS for client -> API
 
+### generate POJOs / case classes from OpenAPI spec
+
+
+
 ### RBAC
 
 https://github.com/testcontainers-all-things-kafka/cp-testcontainers/blob/master/src/intTest/java/net/christophschubert/cp/testcontainers/CPServerTest.java
-
 
 ### Kafka REST API
 
