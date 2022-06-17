@@ -81,6 +81,7 @@ lazy val library =
       val airframeLog    = "21.12.1"
       val logback        = "1.2.10"
       val jackson        = "2.1.2"
+      val jacksonScala        = "2.13.2"
       val scalatest      = "3.2.10"
       val testContainers = "0.2.1"
       val restAssured    = "5.1.1"
@@ -89,7 +90,7 @@ lazy val library =
     val airframeLog     = "org.wvlet.airframe"        %% "airframe-log"     % Version.airframeLog
     val logback         = "ch.qos.logback"             % "logback-core"     % Version.logback
     val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % Version.jackson
-    val jacksonScala = "com.fasterxml.jackson.module" % "jackson-module-scala" % Version.jackson
+    val jacksonScala = "com.fasterxml.jackson.module" %% "jackson-module-scala" % Version.jacksonScala
 
     val testcontainers =
       "com.github.christophschubert" % "cp-testcontainers" % Version.testContainers

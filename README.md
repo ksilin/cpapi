@@ -2,6 +2,14 @@
 
 Welcome to cpapi! Playing with different on-prem APIs.
 
+## cp-testcontainers setup
+
+## docker setup 
+
+see docker-compose file in test/resources. 
+
+once started, see SWAGGER UI: http://localhost:8090/security/openapi/swagger-ui/index.html#/
+
 ## TODOs
 
 ### custom docker images

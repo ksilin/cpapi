@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters._
 
 class MdsDockerSpec extends AnyFreeSpecLike {
 
-  // assumes a docker-compose running
+  // assumes a docker-compose running, see resources folder for details
 
   val host = "localhost"
   val port = 8090
@@ -18,6 +18,7 @@ class MdsDockerSpec extends AnyFreeSpecLike {
   val alice = "alice"
   val aliceSecret = "alice-secret"
 
+  //superuser - see login.properties
   val mdsUser = "mds"
   val mdsSecret = "mds-secret"
 
@@ -112,7 +113,6 @@ class MdsDockerSpec extends AnyFreeSpecLike {
   "can authorize" in {
 
     // TODO - needs cluster ID and resource to authorize for
-
     val rq = RestAssured.`given`().auth().preemptive().basic(alice, aliceSecret).when().get("/security/1.0/authorize")
       .Then().statusCode(200)
 
